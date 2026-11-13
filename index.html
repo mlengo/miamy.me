@@ -15,6 +15,12 @@
       --ink: #1f2a2e;
       --muted: #5b6a6f;
       --accent: #e8a317;
+      --shell: #f2b63a;
+      --shell-dark: #c98d14;
+      --bezel: #2c3438;
+      --lcd: #d3dcbc;
+      --lcd-ink: #26301f;
+      --lcd-muted: #4d5a3e;
       color-scheme: light;
     }
     @media (prefers-color-scheme: dark) {
@@ -33,54 +39,73 @@
       --accent: #f2b63a;
       color-scheme: dark;
     }
-    :root {
-      box-sizing: border-box;
-      padding-top: env(safe-area-inset-top, 0px);
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-      background: var(--bg);
-    }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
     body {
       background: var(--bg);
       color: var(--ink);
       font-family: "Press Start 2P", ui-monospace, "Courier New", monospace;
-      display: grid;
-      place-items: center;
-      padding: 2rem;
+      overflow: hidden;
       -webkit-font-smoothing: none;
       font-smooth: never;
     }
-    main { max-width: 40rem; width: 100%; }
+
+    /* ---------- the page itself, which later becomes the handheld's screen ---------- */
+    .screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      z-index: 2;
+      container-type: size;
+      display: grid;
+      place-items: center;
+      padding: 4cqw;
+      background: var(--bg);
+      border-radius: 0;
+      transition:
+        top 1.6s cubic-bezier(.65, 0, .35, 1),
+        left 1.6s cubic-bezier(.65, 0, .35, 1),
+        width 1.6s cubic-bezier(.65, 0, .35, 1),
+        height 1.6s cubic-bezier(.65, 0, .35, 1),
+        background-color .8s ease 1s,
+        border-radius 1.6s ease;
+    }
+    .inner { width: 100%; max-width: max(50cqw, min(100%, 40rem)); }
     h1 {
-      font-size: clamp(1.6rem, 6.5vw, 3.4rem);
+      font-size: min(9cqw, 3.4rem, 13cqh);
       font-weight: 400;
       line-height: 1.3;
-      margin: 0 0 1.25rem;
+      margin: 0 0 0.5em;
+      transition: color .8s ease 1s;
     }
     .stage {
       position: relative;
-      height: 32px;
-      margin: 0 0 1.25rem;
+      height: min(9cqw, 32px, 13cqh);
+      margin: 0 0 0.6em;
       overflow: hidden;
+      font-size: min(6.5cqw, 3.4rem, 12cqh);
     }
     #sprite {
       position: absolute;
       left: 0;
       bottom: 0;
-      width: 40px;
-      height: 32px;
+      height: 100%;
+      aspect-ratio: 20 / 16;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
     p {
-      font-size: clamp(0.9rem, 3vw, 1.25rem);
+      font-size: min(4.6cqw, 1.25rem, 6.5cqh);
       line-height: 1.8;
       color: var(--muted);
       margin: 0;
       min-height: 1.8em;
+      transition: color .8s ease 1s;
     }
-    .name { color: var(--ink); }
+    .name { color: var(--ink); transition: color .8s ease 1s; }
     .cursor {
       display: inline-block;
       width: 0.6em;
@@ -95,27 +120,166 @@
       position: absolute; width: 1px; height: 1px; overflow: hidden;
       clip: rect(0 0 0 0); white-space: nowrap;
     }
+
+    /* once zoomed out, the page takes on an LCD look */
+    .zoomed .screen { background: var(--lcd); border-radius: 6px; }
+    .zoomed h1, .zoomed .name { color: var(--lcd-ink); }
+    .zoomed p { color: var(--lcd-muted); }
+
+    /* ---------- the handheld (original design) ---------- */
+    .device {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 1;
+      opacity: 0;
+      transform: scale(2.6);
+      transition: transform 1.6s cubic-bezier(.65, 0, .35, 1), opacity .9s ease;
+      pointer-events: none;
+    }
+    .zoomed .device { opacity: 1; transform: scale(1); }
+    .shell {
+      width: min(94vw, 150vh, 760px);
+      aspect-ratio: 2 / 1.05;
+      background: var(--shell);
+      border-radius: 9% / 17%;
+      box-shadow:
+        inset 0 -10px 0 var(--shell-dark),
+        inset 0 4px 0 rgba(255, 255, 255, .35),
+        0 18px 40px rgba(0, 0, 0, .18);
+      display: grid;
+      grid-template-columns: 1fr 2.3fr 1fr;
+      align-items: center;
+      padding: 0 3%;
+      position: relative;
+    }
+    .bezel {
+      background: var(--bezel);
+      border-radius: 4.5% / 6%;
+      padding: 5% 6% 9%;
+      position: relative;
+    }
+    .slot { width: 100%; aspect-ratio: 4 / 3; }
+    .brand {
+      position: absolute;
+      left: 0; right: 0; bottom: 2.5%;
+      text-align: center;
+      color: #c9d1d3;
+      font-size: clamp(6px, 1.3vw, 10px);
+      letter-spacing: .15em;
+    }
+    .power {
+      position: absolute;
+      left: 6%; top: 50%;
+      width: 2.2%; aspect-ratio: 1;
+      border-radius: 50%;
+      background: #e8577a;
+      box-shadow: 0 0 6px #e8577a;
+    }
+    .stick {
+      justify-self: center;
+      width: 62%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--shell-dark);
+      box-shadow: inset 0 4px 8px rgba(0, 0, 0, .25);
+      display: grid;
+      place-items: center;
+    }
+    .stick::after {
+      content: "";
+      width: 58%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--bezel);
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .35), inset 0 3px 0 rgba(255, 255, 255, .12);
+    }
+    .buttons {
+      justify-self: center;
+      width: 70%;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+    }
+    .buttons i {
+      border-radius: 50%;
+      background: #2a9d8f;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .3);
+      margin: 6%;
+    }
+    .buttons i:nth-child(1) { grid-area: 1 / 2; }
+    .buttons i:nth-child(2) { grid-area: 2 / 1; }
+    .buttons i:nth-child(3) { grid-area: 2 / 3; }
+    .buttons i:nth-child(4) { grid-area: 3 / 2; }
+    .grille {
+      position: absolute;
+      right: 7%; bottom: 9%;
+      display: flex; gap: 6px;
+    }
+    .grille b { width: 4px; height: 18px; border-radius: 2px; background: var(--shell-dark); }
+
     @media (prefers-reduced-motion: reduce) {
       .cursor { animation: none; }
+      .screen, .device, h1, p, .name { transition: none; }
     }
+
+    /* debug-only reset button (hidden on the live site) */
+    .debug-reset {
+      position: fixed;
+      right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      z-index: 10;
+      font: inherit;
+      font-size: 10px;
+      padding: 10px 12px;
+      border: 2px solid var(--ink);
+      border-radius: 0;
+      background: var(--bg);
+      color: var(--ink);
+      box-shadow: 3px 3px 0 var(--ink);
+      cursor: pointer;
+    }
+    .debug-reset:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+    .debug-reset:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .debug-reset[hidden] { display: none; }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Hello, World</h1>
-    <div class="stage" aria-hidden="true"><canvas id="sprite" width="20" height="16"></canvas></div>
-    <p>
-      <span class="sr-only">I’m My Huong, also known as Mia.</span>
-      <span aria-hidden="true">I’m <span class="name" id="name"></span><span class="cursor"></span></span>
-    </p>
+  <div class="device" aria-hidden="true">
+    <div class="shell">
+      <span class="power"></span>
+      <div class="stick"></div>
+      <div class="bezel">
+        <div class="slot" id="slot"></div>
+        <div class="brand">MIAMY</div>
+      </div>
+      <div class="buttons"><i></i><i></i><i></i><i></i></div>
+      <div class="grille"><b></b><b></b><b></b></div>
+    </div>
+  </div>
+
+  <button class="debug-reset" id="debugReset" type="button" hidden>Reset</button>
+
+  <main class="screen" id="screen">
+    <div class="inner">
+      <h1>Hello, World</h1>
+      <div class="stage" aria-hidden="true"><canvas id="sprite" width="20" height="16"></canvas></div>
+      <p>
+        <span class="sr-only">I’m My Huong, also known as Mia.</span>
+        <span aria-hidden="true">I’m <span class="name" id="name"></span><span class="cursor"></span></span>
+      </p>
+    </div>
   </main>
+
   <script>
     const names = ["Mia", "My", "Me", "My Huong"];
     const el = document.getElementById("name");
     const wait = ms => new Promise(r => setTimeout(r, ms));
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     async function run() {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (reduced) {
         el.textContent = names[names.length - 1];
         return;
       }
@@ -169,14 +333,13 @@
     }
 
     async function walkIn() {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (reduced) {
         draw("front");
         return;
       }
       const steps = 14;
-      const start = -40;
       for (let i = 0; i <= steps; i++) {
-        canvas.style.transform = `translateX(${Math.round(start + (-start) * i / steps)}px)`;
+        canvas.style.transform = `translateX(${Math.round(-100 + 100 * i / steps)}%)`;
         draw(i % 2 ? "walkA" : "walkB");
         await wait(140);
       }
@@ -189,6 +352,52 @@
       }
     }
     walkIn();
+
+    // After 4 seconds, zoom out so the page sits on a handheld's screen
+    const screenEl = document.getElementById("screen");
+    const slot = document.getElementById("slot");
+    let zoomed = false;
+    const ZOOM_DELAY = 4000;
+
+    function fitToSlot() {
+      const r = slot.getBoundingClientRect();
+      Object.assign(screenEl.style, {
+        top: r.top + "px", left: r.left + "px",
+        width: r.width + "px", height: r.height + "px"
+      });
+    }
+
+    function zoomOut() {
+      if (zoomed) return;
+      zoomed = true;
+      // measure where the screen will sit once the handheld is at full size
+      const device = document.querySelector(".device");
+      device.style.transition = "none";
+      device.style.transform = "scale(1)";
+      const r = slot.getBoundingClientRect();
+      device.style.transform = "";
+      device.offsetHeight;
+      device.style.transition = "";
+      document.body.classList.add("zoomed");
+      Object.assign(screenEl.style, {
+        top: r.top + "px", left: r.left + "px",
+        width: r.width + "px", height: r.height + "px"
+      });
+      window.addEventListener("resize", () => {
+        screenEl.style.transition = "none";
+        fitToSlot();
+        requestAnimationFrame(() => { screenEl.style.transition = ""; });
+      });
+    }
+
+    setTimeout(zoomOut, ZOOM_DELAY);
+
+    // Debug: restart everything from the beginning. Hidden on the live site.
+    const resetBtn = document.getElementById("debugReset");
+    if (!/(^|\.)miamy\.me$/.test(location.hostname)) {
+      resetBtn.hidden = false;
+      resetBtn.addEventListener("click", () => location.reload());
+    }
   </script>
 </body>
 </html>
