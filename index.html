@@ -112,19 +112,21 @@
         return;
       }
       await wait(600);
-      for (let i = 0; i < names.length; i++) {
-        const word = names[i];
-        for (let c = 1; c <= word.length; c++) {
-          el.textContent = word.slice(0, c);
-          await wait(140);
+      while (true) {
+        for (let i = 0; i < names.length; i++) {
+          const word = names[i];
+          for (let c = 1; c <= word.length; c++) {
+            el.textContent = word.slice(0, c);
+            await wait(140);
+          }
+          // Linger a bit longer on the full name before starting over
+          await wait(i === names.length - 1 ? 2200 : 1100);
+          for (let c = word.length - 1; c >= 0; c--) {
+            el.textContent = word.slice(0, c);
+            await wait(80);
+          }
+          await wait(350);
         }
-        if (i === names.length - 1) break;
-        await wait(1100);
-        for (let c = word.length - 1; c >= 0; c--) {
-          el.textContent = word.slice(0, c);
-          await wait(80);
-        }
-        await wait(350);
       }
     }
     run();
