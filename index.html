@@ -62,7 +62,6 @@
       container-type: size;
       display: grid;
       place-items: center;
-      padding: 4cqw;
       background: var(--bg);
       border-radius: 0;
       transition:
@@ -70,12 +69,14 @@
         left 1.6s cubic-bezier(.65, 0, .35, 1),
         width 1.6s cubic-bezier(.65, 0, .35, 1),
         height 1.6s cubic-bezier(.65, 0, .35, 1),
+        transform 1.6s cubic-bezier(.65, 0, .35, 1),
         background-color .8s ease 1s,
         border-radius 1.6s ease;
+      transform-origin: 0 0;
     }
-    .inner { width: 100%; max-width: max(50cqw, min(100%, 40rem)); }
+    .inner { width: 100%; max-width: max(50cqw, min(100%, 40rem)); padding: 0 4cqw; }
     h1 {
-      font-size: min(9cqw, 3.4rem, 13cqh);
+      font-size: min(6.8cqw, 3.4rem, 13cqh);
       font-weight: 400;
       line-height: 1.3;
       margin: 0 0 0.5em;
@@ -134,13 +135,14 @@
       place-items: center;
       z-index: 1;
       opacity: 0;
-      transform: scale(2.6);
+      transform: scale(calc(var(--k, 1) * 2.6));
       transition: transform 1.6s cubic-bezier(.65, 0, .35, 1), opacity .9s ease;
       pointer-events: none;
     }
-    .zoomed .device { opacity: 1; transform: scale(1); }
+    .zoomed .device { opacity: 1; transform: scale(var(--k, 1)); }
     .shell {
-      width: min(94vw, 150vh, 760px);
+      width: 760px;
+      flex: none;
       aspect-ratio: 2 / 1.05;
       background: var(--shell);
       border-radius: 9% / 17%;
@@ -151,8 +153,11 @@
       display: grid;
       grid-template-columns: 1fr 2.3fr 1fr;
       align-items: center;
-      padding: 0 3%;
-      position: relative;
+      padding: 0 23px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      translate: -50% -50%;
     }
     .bezel {
       background: var(--bezel);
@@ -166,7 +171,7 @@
       left: 0; right: 0; bottom: 2.5%;
       text-align: center;
       color: #c9d1d3;
-      font-size: clamp(6px, 1.3vw, 10px);
+      font-size: 10px;
       letter-spacing: .15em;
     }
     .power {
@@ -359,34 +364,45 @@
     let zoomed = false;
     const ZOOM_DELAY = 4000;
 
-    function fitToSlot() {
+    // The handheld is drawn at one fixed size and scaled as a whole, so the
+    // screen's contents keep the same layout at every window size.
+    const DEVICE_W = 760, DEVICE_H = 760 / 2 * 1.05;
+    const device = document.querySelector(".device");
+
+    function deviceScale() {
+      return Math.min(1, (window.innerWidth * 0.94) / DEVICE_W, (window.innerHeight * 0.92) / DEVICE_H);
+    }
+
+    function placeScreen(k) {
+      // measure the slot with the device at its final scale
+      device.style.transition = "none";
+      device.style.transform = `scale(${k})`;
       const r = slot.getBoundingClientRect();
+      device.style.transform = "";
+      device.offsetHeight;
+      device.style.transition = "";
       Object.assign(screenEl.style, {
         top: r.top + "px", left: r.left + "px",
-        width: r.width + "px", height: r.height + "px"
+        width: r.width / k + "px", height: r.height / k + "px",
+        transform: `scale(${k})`
       });
     }
 
     function zoomOut() {
       if (zoomed) return;
       zoomed = true;
-      // measure where the screen will sit once the handheld is at full size
-      const device = document.querySelector(".device");
-      device.style.transition = "none";
-      device.style.transform = "scale(1)";
-      const r = slot.getBoundingClientRect();
-      device.style.transform = "";
-      device.offsetHeight;
-      device.style.transition = "";
+      const k = deviceScale();
+      document.documentElement.style.setProperty("--k", k);
+      placeScreen(k);
       document.body.classList.add("zoomed");
-      Object.assign(screenEl.style, {
-        top: r.top + "px", left: r.left + "px",
-        width: r.width + "px", height: r.height + "px"
-      });
       window.addEventListener("resize", () => {
+        const k = deviceScale();
         screenEl.style.transition = "none";
-        fitToSlot();
-        requestAnimationFrame(() => { screenEl.style.transition = ""; });
+        device.style.transition = "none";
+        document.documentElement.style.setProperty("--k", k);
+        placeScreen(k);
+        screenEl.offsetHeight;
+        requestAnimationFrame(() => { screenEl.style.transition = ""; device.style.transition = ""; });
       });
     }
 
